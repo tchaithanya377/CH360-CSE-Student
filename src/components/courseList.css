@@ -1,0 +1,71 @@
+/* styles.css */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  .bg-light {
+    background: linear-gradient(145deg, #e6e9ee, #ffffff);
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+  }
+  
+  h1, h3, h4 {
+    font-weight: 700;
+  }
+  
+  p {
+    line-height: 1.6;
+  }
+  
+  .text-primary {
+    color: #3498db;
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  input::placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
+  
+  input + svg {
+    pointer-events: none;
+  }
+  
+  @media (max-width: 600px) {
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: none;
+    }
+  }
+  
