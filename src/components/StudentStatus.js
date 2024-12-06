@@ -9,7 +9,8 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useAuth } from "../auth"; // Authentication hook to get the logged-in student
+import { useAuth } from "../auth";
+import { Link } from "react-router-dom";
 
 const StudentStatus = () => {
   const { user } = useAuth(); // Get the logged-in user
@@ -157,6 +158,12 @@ const StudentStatus = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4">
+      <><Link
+         to='/'
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition-transform transform hover:scale-105"
+        >
+          Logout
+        </Link></>
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
         Student Status
       </h1>
