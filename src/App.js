@@ -14,12 +14,19 @@ import ExamsPage from './components/ExamsPage';
 import ProfilePage from './components/ProfilePage';
 import RequestPage from './components/RequestPage';
 import HelpPage from './components/HelpPage';
+import StudentStatus from './components/StudentStatus';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './auth'; // Ensure AuthProvider  is imported
 
 function App() {
   return (
-    <Router>
-      <MainLayout />
-    </Router>
+    <AuthProvider> {/* Wrap the entire app with AuthProvider */}
+      <Router>
+        <ToastContainer /> {/* Place ToastContainer here for global toast messages */}
+        <MainLayout />
+      </Router>
+    </AuthProvider>
   );
 }
 
@@ -30,12 +37,12 @@ const MainLayout = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      {!isHome && !isLogin && <Navbar />}
+      {/* {!isHome && !isLogin && <Navbar />} Navbar is hidden on '/' and '/login' */}
       <div className="flex-1 overflow-auto">
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* <Route path="/" element={<Home />} /> */}
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<StudentDashboard />} />
+          {/* <Route path="/dashboard" element={<StudentDashboard />} />
           <Route path="/courses" element={<CourseList />} />
           <Route path="/courses/:id" element={<CourseDetails />} />
           <Route path="/assignments" element={<Assignments />} />
@@ -45,13 +52,12 @@ const MainLayout = () => {
           <Route path="/grades" element={<GradesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/requests" element={<RequestPage />} />
-          <Route path="/help" element={<HelpPage />} />
-
-
+          <Route path="/help" element={<HelpPage />} /> */}
+          <Route path="/nodues" element={<StudentStatus />} />
         </Routes>
       </div>
     </div>
   );
-}
+};
 
 export default App;

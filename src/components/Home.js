@@ -3,18 +3,19 @@ import home1 from '../images/home1.png';
 import home2 from '../images/home2.png'; // Ensure you have this image in your project
 import { Link } from 'react-router-dom';
 
+
 const Home = () => {
   return (
     <>
       <div className="bg-black min-h-screen flex flex-col items-center text-white">
         <header className="w-full py-6 flex justify-between items-center px-4 md:px-10">
           <div className="text-xl md:text-2xl font-bold">CampusHub360</div>
-          <nav className="hidden md:flex space-x-2 md:space-x-4">
+          {/* <nav className="hidden md:flex space-x-2 md:space-x-4">
             <a href="/dashboard" className="hover:text-gray-300">Dashboard</a>
             <a href="/dashboard" className="hover:text-gray-300">Courses</a>
             <a href="/dashboard" className="hover:text-gray-300">Attendance</a>
-          </nav>
-          <button className="border border-white py-2 px-4 rounded hover:bg-white hover:text-black text-sm md:text-base">Get Started</button>
+          </nav> */}
+          <a href='/login' className="border border-white py-2 px-4 rounded hover:bg-white hover:text-black text-sm md:text-base">Get Started</a>
         </header>
         <main className="flex flex-1 items-center justify-center px-4 md:px-0">
           <motion.div 
