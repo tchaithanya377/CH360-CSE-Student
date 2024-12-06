@@ -41,7 +41,7 @@ const MainLayout = () => {
       <div className="flex-1 overflow-auto">
         <Routes>
           {/* <Route path="/" element={<Home />} /> */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           {/* <Route path="/dashboard" element={<StudentDashboard />} />
           <Route path="/courses" element={<CourseList />} />
           <Route path="/courses/:id" element={<CourseDetails />} />
