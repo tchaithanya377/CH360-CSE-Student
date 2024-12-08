@@ -92,23 +92,25 @@ const StudentStatus = () => {
             ? courseSnap.data()?.courseName || "N/A"
             : "Unknown";
 
-          const facultyId = matchedStudent.courses_faculty.find(
+          const courseFaculty = matchedStudent.courses_faculty.find(
             (cf) => cf.courseId === course.id
-          )?.facultyId;
+          );
 
           let facultyName = "Unknown";
-          if (facultyId) {
-            const facultyRef = doc(db, "faculty", facultyId);
+          let courseStatus = course.status || "Pending";
+          if (courseFaculty) {
+            const facultyRef = doc(db, "faculty", courseFaculty.facultyId);
             const facultySnap = await getDoc(facultyRef);
             facultyName = facultySnap.exists()
               ? facultySnap.data()?.name || "N/A"
               : "Unknown";
+            courseStatus = courseFaculty.status || "Pending";
           }
 
           return {
             courseName,
             facultyName,
-            status: course.status || "Pending",
+            status: courseStatus,
           };
         })
       );
@@ -165,7 +167,7 @@ const StudentStatus = () => {
           Logout
         </Link></>
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-        Student Status
+        No Dues Student Status
       </h1>
       {loading ? (
         <p className="text-center text-blue-600 font-medium">Loading...</p>
