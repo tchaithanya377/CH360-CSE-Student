@@ -162,7 +162,7 @@ const StudentStatus = () => {
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
-      case "completed":
+      case "accepted":
         return "text-green-500";
       case "pending":
         return "text-yellow-500";
