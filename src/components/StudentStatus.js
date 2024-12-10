@@ -11,21 +11,19 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../auth";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const StudentStatus = () => {
-  const { user } = useAuth(); // Get the logged-in user
+  const { user } = useAuth();
   const [studentData, setStudentData] = useState(null);
   const [yearSection, setYearSection] = useState({ year: null, section: null });
   const [loading, setLoading] = useState(false);
 
-  const loggedInStudentId = user?.uid; // Student ID from authentication
+  const loggedInStudentId = user?.uid;
 
   useEffect(() => {
     if (loggedInStudentId) {
-      console.log("Logged in Student ID:", loggedInStudentId);
       fetchYearSectionAndData();
-    } else {
-      console.error("No logged-in Student ID found!");
     }
   }, [loggedInStudentId]);
 
@@ -37,17 +35,15 @@ const StudentStatus = () => {
 
     setLoading(true);
     try {
-      // Step 1: Find the student's year and section dynamically
       let foundYear = null;
       let foundSection = null;
-      const years = ["I", "II", "III", "IV"]; // List of possible years
-      const sections = ["A", "B", "C"]; // List of possible sections
+      const years = ["I", "II", "III", "IV"];
+      const sections = ["A", "B", "C"];
 
       for (const year of years) {
         for (const section of sections) {
           const studentRef = doc(db, `students/${year}/${section}/${loggedInStudentId}`);
           const studentSnap = await getDoc(studentRef);
-
           if (studentSnap.exists()) {
             foundYear = year;
             foundSection = section;
@@ -59,44 +55,35 @@ const StudentStatus = () => {
       }
 
       if (!foundYear || !foundSection) {
-        console.error("Year or Section is missing for the student.");
         setLoading(false);
         return;
       }
 
-      // Step 2: Query the noDues data dynamically
       const noDuesDocRef = doc(db, `noDues/${foundYear}/${foundSection}/summary`);
       const noDuesDocSnap = await getDoc(noDuesDocRef);
 
       if (!noDuesDocSnap.exists()) {
-        console.error("No dues document not found.");
-        setStudentData(null);
         setLoading(false);
         return;
       }
 
       const noDuesData = noDuesDocSnap.data();
 
-      // Step 3: Match the student ID within the students array
       const matchedStudent = noDuesData.students.find(
         (student) => student.id === loggedInStudentId
       );
 
       if (!matchedStudent) {
-        console.error("No matching data found for the logged-in student.");
-        setStudentData(null);
         setLoading(false);
         return;
       }
 
-      // Step 4: Fetch additional student details
       const studentRef = doc(db, `students/${foundYear}/${foundSection}/${loggedInStudentId}`);
       const studentSnap = await getDoc(studentRef);
 
       const studentName = studentSnap.exists() ? studentSnap.data()?.name || "N/A" : "Unknown";
       const studentRollNo = studentSnap.exists() ? studentSnap.data()?.rollNo || "N/A" : "N/A";
 
-      // Step 5: Fetch courses with faculty details
       const coursesWithFaculty = await Promise.all(
         matchedStudent.courses.map(async (course) => {
           const courseRef = doc(
@@ -133,7 +120,6 @@ const StudentStatus = () => {
         })
       );
 
-      // Step 6: Fetch coordinators
       const coordinators = await Promise.all(
         matchedStudent.coordinators.map(async (coordinator) => {
           const coordinatorRef = doc(db, "faculty", coordinator.id);
@@ -147,7 +133,6 @@ const StudentStatus = () => {
         })
       );
 
-      // Step 7: Fetch mentors
       const mentors = await Promise.all(
         matchedStudent.mentors.map(async (mentor) => {
           const mentorRef = doc(db, "faculty", mentor.id);
@@ -161,7 +146,6 @@ const StudentStatus = () => {
         })
       );
 
-      // Step 8: Set the student data
       setStudentData({
         name: studentName,
         rollNo: studentRollNo,
@@ -171,171 +155,158 @@ const StudentStatus = () => {
       });
     } catch (error) {
       console.error("Error fetching student data:", error);
-      setStudentData(null);
     } finally {
       setLoading(false);
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "text-green-500";
+      case "pending":
+        return "text-yellow-500";
+      case "rejected":
+        return "text-red-500";
+      default:
+        return "text-gray-500";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4">
-      <Link
-        to="/"
-        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition-transform transform hover:scale-105"
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white px-6 py-12">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-5xl mx-auto"
       >
-        Logout
-      </Link>
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-        No Dues Student Status
-      </h1>
-      {loading ? (
-        <p className="text-center text-blue-600 font-medium">Loading...</p>
-      ) : studentData ? (
-        <div className="w-full max-w-4xl">
-          <p className="text-lg mb-2">
-            <strong>Name:</strong> {studentData.name}
-          </p>
-          <p className="text-lg mb-2">
-            <strong>Roll Number:</strong> {studentData.rollNo}
-          </p>
-          <p className="text-lg mb-2">
-            <strong>Year:</strong> {yearSection.year}
-          </p>
-          <p className="text-lg mb-6">
-            <strong>Section:</strong> {yearSection.section}
-          </p>
+        <header className="mb-8 text-center">
+          <h1 className="text-4xl font-extrabold tracking-wide">
+            <span className="text-blue-400">CampusHub360</span>
+          </h1>
+          <p className="text-lg text-gray-300 mt-2">Your No Dues Status Dashboard</p>
+        </header>
 
-          {/* Courses Section */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Courses</h2>
-            <table className="table-auto w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Course Name
-                  </th>
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Faculty Name
-                  </th>
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentData.coursesWithFaculty?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="3"
-                      className="px-4 py-2 text-center text-gray-500"
-                    >
-                      No data available
-                    </td>
-                  </tr>
-                ) : (
-                  studentData.coursesWithFaculty.map((course, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-all">
-                      <td className="px-4 py-2 border border-gray-300">
-                        {course.courseName}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {course.facultyName}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {course.status}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <Link
+          to="/"
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full shadow-lg transition-transform transform hover:scale-105 mb-8 inline-block"
+        >
+          Logout
+        </Link>
 
-          {/* Coordinators Section */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Coordinators
-            </h2>
-            <table className="table-auto w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Coordinator Name
-                  </th>
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentData.coordinators?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="2"
-                      className="px-4 py-2 text-center text-gray-500"
-                    >
-                      No data available
-                    </td>
-                  </tr>
-                ) : (
-                  studentData.coordinators.map((coordinator, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-all">
-                      <td className="px-4 py-2 border border-gray-300">
-                        {coordinator.name}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {coordinator.status}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        {loading ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-blue-400 font-medium"
+          >
+            Loading...
+          </motion.p>
+        ) : studentData ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-6"
+          >
+            <div className="p-6 bg-gray-800 bg-opacity-70 rounded-lg shadow-md">
+              <p className="text-lg">
+                <strong>Name:</strong> {studentData.name}
+              </p>
+              <p className="text-lg">
+                <strong>Roll Number:</strong> {studentData.rollNo}
+              </p>
+              <p className="text-lg">
+                <strong>Year:</strong> {yearSection.year}
+              </p>
+              <p className="text-lg">
+                <strong>Section:</strong> {yearSection.section}
+              </p>
+            </div>
 
-          {/* Mentors Section */}
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Mentors</h2>
-            <table className="table-auto w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Mentor Name
-                  </th>
-                  <th className="px-4 py-2 border border-gray-300 text-left">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentData.mentors?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="2"
-                      className="px-4 py-2 text-center text-gray-500"
-                    >
-                      No data available
-                    </td>
-                  </tr>
-                ) : (
-                  studentData.mentors.map((mentor, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-all">
-                      <td className="px-4 py-2 border border-gray-300">
-                        {mentor.name}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {mentor.status}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        <p className="text-center text-red-600">No student data found.</p>
-      )}
+            {/* Courses Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-center">Courses</h2>
+              {studentData.coursesWithFaculty.map((course, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 bg-gray-800 rounded-lg shadow-md"
+                >
+                  <p>
+                    <strong>Course:</strong> {course.courseName}
+                  </p>
+                  <p>
+                    <strong>Faculty:</strong> {course.facultyName}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span className={getStatusColor(course.status)}>
+                      {course.status}
+                    </span>
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Coordinators Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-center">Coordinators</h2>
+              {studentData.coordinators.map((coordinator, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 bg-gray-800 rounded-lg shadow-md"
+                >
+                  <p>
+                    <strong>Name:</strong> {coordinator.name}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span className={getStatusColor(coordinator.status)}>
+                      {coordinator.status}
+                    </span>
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Mentors Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-center">Mentors</h2>
+              {studentData.mentors.map((mentor, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 bg-gray-800 rounded-lg shadow-md"
+                >
+                  <p>
+                    <strong>Name:</strong> {mentor.name}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span className={getStatusColor(mentor.status)}>
+                      {mentor.status}
+                    </span>
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-red-400"
+          >
+            No student data found.
+          </motion.p>
+        )}
+      </motion.div>
     </div>
   );
 };
