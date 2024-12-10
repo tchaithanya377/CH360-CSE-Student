@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 const StudentStatus = () => {
   const { user } = useAuth(); // Get the logged-in user
   const [studentData, setStudentData] = useState(null);
+  const [yearSection, setYearSection] = useState({ year: null, section: null });
   const [loading, setLoading] = useState(false);
 
   const loggedInStudentId = user?.uid; // Student ID from authentication
@@ -22,13 +23,13 @@ const StudentStatus = () => {
   useEffect(() => {
     if (loggedInStudentId) {
       console.log("Logged in Student ID:", loggedInStudentId);
-      fetchStudentData();
+      fetchYearSectionAndData();
     } else {
       console.error("No logged-in Student ID found!");
     }
   }, [loggedInStudentId]);
 
-  const fetchStudentData = async () => {
+  const fetchYearSectionAndData = async () => {
     if (!loggedInStudentId) {
       console.error("Student ID is required.");
       return;
@@ -36,26 +37,47 @@ const StudentStatus = () => {
 
     setLoading(true);
     try {
-      // Query to get the latest noDues document
-      const noDuesCollectionRef = collection(db, "noDues/III/A");
-      const latestNoDuesQuery = query(
-        noDuesCollectionRef,
-        orderBy("generatedAt", "desc"),
-        limit(1)
-      );
-      const querySnapshot = await getDocs(latestNoDuesQuery);
+      // Step 1: Find the student's year and section dynamically
+      let foundYear = null;
+      let foundSection = null;
+      const years = ["I", "II", "III", "IV"]; // List of possible years
+      const sections = ["A", "B", "C"]; // List of possible sections
 
-      if (querySnapshot.empty) {
-        console.error("No noDues documents found.");
+      for (const year of years) {
+        for (const section of sections) {
+          const studentRef = doc(db, `students/${year}/${section}/${loggedInStudentId}`);
+          const studentSnap = await getDoc(studentRef);
+
+          if (studentSnap.exists()) {
+            foundYear = year;
+            foundSection = section;
+            setYearSection({ year: foundYear, section: foundSection });
+            break;
+          }
+        }
+        if (foundYear && foundSection) break;
+      }
+
+      if (!foundYear || !foundSection) {
+        console.error("Year or Section is missing for the student.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Query the noDues data dynamically
+      const noDuesDocRef = doc(db, `noDues/${foundYear}/${foundSection}/summary`);
+      const noDuesDocSnap = await getDoc(noDuesDocRef);
+
+      if (!noDuesDocSnap.exists()) {
+        console.error("No dues document not found.");
         setStudentData(null);
         setLoading(false);
         return;
       }
 
-      const latestNoDuesDoc = querySnapshot.docs[0];
-      const noDuesData = latestNoDuesDoc.data();
+      const noDuesData = noDuesDocSnap.data();
 
-      // Match the student ID within the students array
+      // Step 3: Match the student ID within the students array
       const matchedStudent = noDuesData.students.find(
         (student) => student.id === loggedInStudentId
       );
@@ -67,23 +89,19 @@ const StudentStatus = () => {
         return;
       }
 
-      // Fetch additional student details (e.g., rollNo and name)
-      const studentRef = doc(db, "students/III/A", loggedInStudentId);
+      // Step 4: Fetch additional student details
+      const studentRef = doc(db, `students/${foundYear}/${foundSection}/${loggedInStudentId}`);
       const studentSnap = await getDoc(studentRef);
 
-      const studentName = studentSnap.exists()
-        ? studentSnap.data()?.name || "N/A"
-        : "Unknown";
-      const studentRollNo = studentSnap.exists()
-        ? studentSnap.data()?.rollNo || "N/A"
-        : "N/A";
+      const studentName = studentSnap.exists() ? studentSnap.data()?.name || "N/A" : "Unknown";
+      const studentRollNo = studentSnap.exists() ? studentSnap.data()?.rollNo || "N/A" : "N/A";
 
-      // Fetch courses with faculty details
+      // Step 5: Fetch courses with faculty details
       const coursesWithFaculty = await Promise.all(
         matchedStudent.courses.map(async (course) => {
           const courseRef = doc(
             db,
-            "courses/Computer Science & Engineering (Data Science)/years/III/sections/A/courseDetails",
+            `courses/Computer Science & Engineering (Data Science)/years/${foundYear}/sections/${foundSection}/courseDetails`,
             course.id
           );
           const courseSnap = await getDoc(courseRef);
@@ -115,7 +133,7 @@ const StudentStatus = () => {
         })
       );
 
-      // Fetch coordinators
+      // Step 6: Fetch coordinators
       const coordinators = await Promise.all(
         matchedStudent.coordinators.map(async (coordinator) => {
           const coordinatorRef = doc(db, "faculty", coordinator.id);
@@ -129,7 +147,7 @@ const StudentStatus = () => {
         })
       );
 
-      // Fetch mentors
+      // Step 7: Fetch mentors
       const mentors = await Promise.all(
         matchedStudent.mentors.map(async (mentor) => {
           const mentorRef = doc(db, "faculty", mentor.id);
@@ -143,6 +161,7 @@ const StudentStatus = () => {
         })
       );
 
+      // Step 8: Set the student data
       setStudentData({
         name: studentName,
         rollNo: studentRollNo,
@@ -160,12 +179,12 @@ const StudentStatus = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4">
-      <><Link
-         to='/'
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition-transform transform hover:scale-105"
-        >
-          Logout
-        </Link></>
+      <Link
+        to="/"
+        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-md transition-transform transform hover:scale-105"
+      >
+        Logout
+      </Link>
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
         No Dues Student Status
       </h1>
@@ -176,8 +195,14 @@ const StudentStatus = () => {
           <p className="text-lg mb-2">
             <strong>Name:</strong> {studentData.name}
           </p>
-          <p className="text-lg mb-6">
+          <p className="text-lg mb-2">
             <strong>Roll Number:</strong> {studentData.rollNo}
+          </p>
+          <p className="text-lg mb-2">
+            <strong>Year:</strong> {yearSection.year}
+          </p>
+          <p className="text-lg mb-6">
+            <strong>Section:</strong> {yearSection.section}
           </p>
 
           {/* Courses Section */}
@@ -316,4 +341,3 @@ const StudentStatus = () => {
 };
 
 export default StudentStatus;
-    
