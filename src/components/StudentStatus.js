@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-  getDocs,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth";
 import { Link } from "react-router-dom";
@@ -16,6 +8,7 @@ const StudentStatus = () => {
   const { user } = useAuth(); // Get the logged-in user
   const [studentData, setStudentData] = useState(null);
   const [yearSection, setYearSection] = useState({ year: null, section: null });
+  const [hod, setHod] = useState({ name: "N/A", status: "Pending" });
   const [loading, setLoading] = useState(false);
 
   const loggedInStudentId = user?.uid; // Student ID from authentication
@@ -65,12 +58,11 @@ const StudentStatus = () => {
       }
 
       // Step 2: Query the noDues data dynamically
-      const noDuesDocRef = doc(db, `noDues/${foundYear}/${foundSection}/summary`);
+      const noDuesDocRef = doc(db, `noDues/${foundYear}/${foundSection}/sem1`);
       const noDuesDocSnap = await getDoc(noDuesDocRef);
 
       if (!noDuesDocSnap.exists()) {
-        console.error("No dues document not found.");
-        setStudentData(null);
+        console.error(`No dues document not found at path: noDues/${foundYear}/${foundSection}/sem1`);
         setLoading(false);
         return;
       }
@@ -101,14 +93,11 @@ const StudentStatus = () => {
         matchedStudent.courses.map(async (course) => {
           const courseRef = doc(
             db,
-            `courses/Computer Science & Engineering (Data Science)/years/${foundYear}/sections/${foundSection}/courseDetails`,
+            `courses/${foundYear}/${foundSection}/sem1/courseDetails`,
             course.id
           );
           const courseSnap = await getDoc(courseRef);
-
-          const courseName = courseSnap.exists()
-            ? courseSnap.data()?.courseName || "N/A"
-            : "Unknown";
+          const courseName = courseSnap.exists() ? courseSnap.data()?.courseName || "N/A" : "Unknown";
 
           const courseFaculty = matchedStudent.courses_faculty.find(
             (cf) => cf.courseId === course.id
@@ -160,8 +149,36 @@ const StudentStatus = () => {
           };
         })
       );
+      
 
-      // Step 8: Set the student data
+// Step 8: Fetch HOD details
+// Step 8: Fetch HOD details
+// Step 8: Fetch HOD details
+if (noDuesDocSnap.exists()) {
+  const noDuesData = noDuesDocSnap.data();
+  console.log("Fetched noDuesData:", noDuesData); // Log fetched data
+
+  // Check if HOD object exists and has required fields
+  const hodData = noDuesData?.hod; // Optional chaining for safe access
+  console.log("HOD Data:", hodData);
+
+  if (hodData && typeof hodData === "object") {
+    // Check for valid HOD data
+    setHod({
+      name: hodData.name || "N/A",
+      status: hodData.status || "Pending",
+    });
+    console.log("HOD Details Set:", hodData.name, hodData.status);
+  } else {
+    console.warn("HOD data is invalid or missing.");
+    setHod({ name: "N/A", status: "Pending" });
+  }
+} else {
+  console.error("No dues document not found.");
+  setHod({ name: "N/A", status: "Pending" });
+}
+
+      // Step 9: Set the student data and HOD details
       setStudentData({
         name: studentName,
         rollNo: studentRollNo,
@@ -176,6 +193,9 @@ const StudentStatus = () => {
       setLoading(false);
     }
   };
+  
+  
+  
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4">
@@ -332,6 +352,27 @@ const StudentStatus = () => {
               </tbody>
             </table>
           </div>
+          <div className="mb-6">
+
+
+  <h2 className="text-xl font-bold text-gray-800 mb-4">HOD</h2>
+  <table className="table-auto w-full border-collapse border border-gray-300">
+    <thead>
+      <tr className="bg-gray-100">
+        <th className="px-4 py-2 border border-gray-300 text-left">HOD Name</th>
+        <th className="px-4 py-2 border border-gray-300 text-left">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="hover:bg-gray-50 transition-all">
+        <td className="px-4 py-2 border border-gray-300">{hod.name}</td>
+        <td className="px-4 py-2 border border-gray-300">{hod.status}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
         </div>
       ) : (
         <p className="text-center text-red-600">No student data found.</p>
