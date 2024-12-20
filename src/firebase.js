@@ -14,6 +14,7 @@ const firebaseConfig = {
   measurementId: "G-17CQLSS4TK"
 };
 
+
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const db = getFirestore(app);

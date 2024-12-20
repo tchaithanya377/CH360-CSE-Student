@@ -21,11 +21,13 @@ const Login = () => {
         autoClose: 3000,
       });
       navigate('/nodues');
-    } catch (err) {
-      toast.error(err.message || 'Login Failed! Please try again.', {
-        position: 'top-right',
+    }catch (err) {
+      console.error("Firebase Login Error:", err.code, err.message);
+      toast.error(err.message || "Login Failed! Please try again.", {
+        position: "top-right",
         autoClose: 3000,
       });
+          
     } finally {
       setLoading(false);
     }
