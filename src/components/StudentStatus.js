@@ -34,7 +34,7 @@ const StudentStatus = () => {
       let foundYear = null;
       let foundSection = null;
       const years = ["I", "II", "III", "IV"]; // List of possible years
-      const sections = ["A", "B", "C"]; // List of possible sections
+      const sections = ["A", "B", "C","D","E","F"]; // List of possible sections
 
       for (const year of years) {
         for (const section of sections) {
